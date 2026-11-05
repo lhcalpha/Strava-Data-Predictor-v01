@@ -1,0 +1,55 @@
+/speckit-plan
+
+Build this as a small, server-rendered Python web app that runs locally on Windows.
+
+STACK
+
+- Python 3.14, using the project's .venv virtual environment
+- FastAPI and Uvicorn for the web server
+- Jinja2 templates with autoescaping on, plain HTML forms, and hand-written CSS
+- Python's csv module for reading uploads, because it keeps repeated column names available
+- No frontend framework or build step, no database, and no external scripts, fonts, or analytics
+- pytest, pytest-cov, and FastAPI TestClient with httpx for unit and integration tests
+- pytest-playwright with Chromium for end-to-end tests
+- Ruff for linting and formatting
+
+STRUCTURE
+
+- src/strava_predictor/domain/: parsing, effort classification, prediction, rating, and plan generation. It must not import FastAPI or Jinja2.
+- src/strava_predictor/config.py: every rule value from the specification as a named constant.
+- src/strava_predictor/web/: routes, input validation, templates, and CSS.
+- tests/unit/, tests/integration/, tests/e2e/, and tests/fixtures/ with synthetic CSV files only.
+
+DESIGN DECISIONS
+
+- Pass the reference date into domain functions, so that tests are deterministic. Only the web layer reads the system date.
+- Parse "Avg" with the case-insensitive pattern \bavg\s*:?\s*(\d{2,3})\b, then apply the valid range check.
+- Read CSV headers by position when names repeat. Identify the km and metre distance columns from their position in the standard Strava export, and cross-check them against moving time and pace. Add a fixture with the real header row and synthetic values.
+- After upload, keep parsed runs in server memory under a random session token in an HttpOnly cookie, so that the user can regenerate without uploading again. Nothing is written to disk. Data is lost when the session expires or the server restarts, and the app then asks for the CSV again.
+- Reject uploads above 10 MB, and treat all CSV text as untrusted. Activity names and descriptions must always be escaped when shown.
+- Bind the server to 127.0.0.1 by default.
+- Do not log uploaded content or heart rate values.
+
+TESTING STRATEGY
+
+Testing is mandatory and comes first. Tasks must place each test before the code it covers.
+
+- Parser: repeated columns, non-run activities, "Avg" variations, missing and out-of-range values, other numbers in descriptions, empty files, malformed files, and missing columns.
+- Effort: values exactly on and either side of each threshold, and thresholds changing with max heart rate.
+- Prediction: Riegel calculations against known values, top-3 selection, the fallback with no hard runs, the interval-only warning, rate multipliers, and distance-fitness slowing.
+- Rating: every boundary, including paces exactly equal to safe, likely, and 2% beyond stretch.
+- Plan: parametrized tests across distances of 3, 5, 10, 21.1, 42.195, and 100 km, 1 to 52 weeks, and 2 to 7 days per week. Assert the 10% volume limit, lighter weeks, session counts, weekly and total 80/20 limits, taper, final race, and that no hard pace beats stretch.
+- Integration: each route with valid input, every validation error, kept form values, oversized uploads, expired sessions, and escaped HTML in activity text.
+- End-to-end: all four user journeys in Chromium, plus an error journey.
+- A privacy test must confirm that uploads are not written to disk or logs.
+
+QUALITY GATES
+
+These commands must all pass before a task or feature is complete:
+
+ruff check .
+ruff format --check .
+pytest --cov=strava_predictor --cov-branch --cov-fail-under=90
+pytest tests/unit --cov=strava_predictor.domain --cov-branch --cov-fail-under=95
+
+Provide a single documented command that runs all gates, and a README explaining how to install, test, and run the app on Windows.

@@ -1,0 +1,100 @@
+/speckit-specify
+
+Build a web app that turns a runner's Strava activity history into an achievable race pace, an honest rating of their goal, and a week-by-week training plan with an 80/20 easy/hard balance.
+
+The first user is one runner, but nothing may be tied to one race or distance. The user can change the inputs and regenerate the plan at any time.
+
+USER JOURNEYS
+
+P1: Check a race goal
+The runner uploads a Strava activities CSV, enters race distance, weeks to race, goal pace, days per week, and max heart rate, then sees today's predicted pace, the safe, likely, and stretch paces, and a rating of their goal.
+
+P2: Get a training plan
+On the same results page, the runner sees a plan for every week up to the race, including phase, weekly distance, weekly time, easy/hard percentages, and each session with its distance and target pace.
+
+P3: Try another scenario
+The runner changes any input and regenerates the results without uploading the CSV again.
+
+P4: Understand the data
+The runner sees which data was used, what was excluded and why, and how much confidence the result deserves.
+
+INPUTS
+
+- CSV file: required. A Strava activities export.
+- Race distance in km: required. Any positive distance up to 100 km. Show a warning below 3 km or above 42.195 km, because the prediction is less reliable there.
+- Weeks to race: required. Whole number from 1 to 52. Show a warning below 4 weeks.
+- Goal pace in min:sec per km: required.
+- Days per week: required. Whole number from 2 to 7.
+- Max heart rate in bpm: editable, default 201, valid from 100 to 240.
+Invalid input must show a clear message beside the field, and any valid values already entered must be kept.
+
+READING THE CSV
+
+- Use only running activities from the 12 weeks before the reference date. The reference date is today.
+- Use activity date, name, type, description, distance, and moving time.
+- Strava exports may contain repeated column names, such as two Distance columns with different units. Convert all distances to km correctly.
+- Average heart rate comes from the number directly after "Avg" in the activity description, ignoring case and accepting forms such as "Avg 165", "Avg: 165", and "avg165". Ignore all other numbers. A value outside 30 to 250 is invalid.
+- A run with a missing or invalid value stays in training volume but is not used to judge effort.
+- A run with no usable distance or moving time is excluded and counted in the data summary.
+- A CSV with missing required columns, or with fewer than 3 usable runs in the window, must produce a clear error and no prediction or plan.
+- If the newest run is more than 14 days before the reference date, warn that the data may be out of date.
+
+CLASSIFYING EFFORT
+
+- Easy: Avg at or below 75% of max heart rate.
+- Hard: Avg at or above 82% of max heart rate.
+- Moderate: anything between.
+- Round both thresholds to the nearest whole bpm. At max heart rate 201, easy is up to 151 and hard starts at 165.
+- A run whose name contains "interval" or "repeat", ignoring case, is an interval run. Interval runs contain fast sections and slow jogs without stopping, so their average heart rate is valid, but whole-run pace only gives a minimum estimate of fitness.
+
+PREDICTING ACHIEVABLE PACE
+
+1. Today's estimate: for each hard run of at least 3 km, predict race time with the Riegel formula: race time = run moving time x (race distance / run distance) ^ 1.06. Average the 3 fastest predictions, or all of them if there are fewer than 3.
+2. If there are no hard runs, use the same method on the 3 fastest runs and mark the result low confidence.
+3. If every run used is an interval run, state that the prediction is probably slower than the runner's true fitness.
+4. Project to race day by reducing today's time by the weekly improvement rate x weeks to race: safe 0.2%, likely 0.3%, stretch 0.5%.
+5. Multiply each rate by 1.25 if the runner ran in fewer than 8 of the 12 weeks or averaged under 15 km per week. Multiply each rate by 0.75 if they averaged over 60 km per week.
+6. Check distance fitness. Target long run: 8 km for 5K, 12 km for 10K, 18 km for half marathon, 30 km for marathon, interpolated linearly by race distance, with 8 km as the minimum and 35 km as the maximum. Grow the longest recent run by up to 10% per training week. For each full 10% that the reachable long run falls short of the target, slow all three projected paces by 1%, and state this in the results.
+
+RATING THE GOAL
+
+- Conservative: slower than safe pace.
+- Realistic: from safe pace to likely pace.
+- Ambitious: faster than likely pace, up to stretch pace.
+- Very ambitious: faster than stretch pace by up to 2%.
+- Unlikely in this time: faster than stretch pace by more than 2%.
+
+Confidence is low if fewer than 3 hard runs were used or if fewer than half of the runs have usable heart rate. Otherwise it is normal.
+
+GENERATING THE PLAN
+
+- Training target pace is the goal pace, but never faster than stretch pace. If the goal is rated Very ambitious or Unlikely in this time, say that training targets the stretch pace.
+- Taper: 1 week for races up to 10 km, 2 weeks up to 21.1 km, and 3 weeks for longer races. Shorten the taper if the plan is too short to hold it.
+- Divide the remaining weeks into base 40%, build 40%, and peak 20%. Plans under 8 weeks lose base weeks first.
+- Starting weekly distance is the average of the last 4 weeks.
+- Weekly distance must not rise more than 10% from the previous normal week. Every 4th week is a lighter week, 20% to 25% below the week before it.
+- Each week has the requested number of sessions, including one long run.
+- The final week ends with the race.
+- Hard time is only the hard portion of a session. Warm-ups, cool-downs, recovery jogs, and easy runs count as easy.
+- 80/20 is measured by running time, not by number of runs. Hard time must not exceed 20% in any week, and must total 15% to 20% of the whole plan.
+- Easy pace is 1.18 to 1.27 times today's estimated 10K pace, calculated from current fitness.
+- Hard pace starts at today's predicted race pace and moves evenly to the training target pace by the end of the peak phase.
+
+OUTPUT
+
+- A summary with today's pace and time, the three projected paces and times, goal pace and time, rating, and confidence.
+- A data summary with runs used, runs excluded, runs with usable heart rate, hard runs used, date range, and warnings.
+- A week-by-week plan in tables, showing session day, type, distance, and target pace.
+- A note that results are estimates and not medical advice.
+
+OUT OF SCOPE
+
+Strava account connection or API access, accounts and login, saved history, live heart rate sensors, mobile apps, plan adaptation during training, elevation or weather adjustment, and exporting plans to other formats.
+
+SUCCESS CRITERIA
+
+- A runner can go from upload to a complete result in under 2 minutes.
+- Regenerating with new inputs takes under 2 seconds for a CSV of up to 5,000 activities.
+- All generated plans satisfy the volume and 80/20 rules across every supported combination of distance, weeks, and days per week covered by the tests.
+- Every rating boundary and effort threshold is confirmed by an automated test.
+- Every journey and acceptance scenario is covered by an automated test.

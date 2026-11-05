@@ -1,0 +1,55 @@
+/speckit-constitution
+
+Create the constitution for Strava Data Predictor, a small web app for one runner. It reads a Strava activities CSV, predicts an achievable race pace, rates the runner's goal, and generates a training plan. Use the principles below. Keep them short, testable, and binding on every spec, plan, task, and implementation.
+
+I. Testing Is Mandatory (NON-NEGOTIABLE)
+- Follow test-driven development: write a test, confirm that it fails, then write the code that makes it pass.
+- Every functional requirement and acceptance scenario must map to at least one automated test.
+- A task is not complete, and a change must not be merged, until all tests pass.
+- Do not skip, disable, weaken, or delete a test to make a build pass. Mark a test as an expected failure only with the project owner's explicit approval.
+- Every bug fix must include a regression test that fails without the fix.
+- Required test levels:
+  - Unit tests for all parsing, prediction, rating, and plan-generation rules.
+  - Integration tests for each web route, including invalid input.
+  - End-to-end browser tests for each primary user journey.
+- Minimum line and branch coverage: 95% for domain logic and 90% for the project overall. Coverage is a minimum, not proof of quality.
+
+II. Correct, Explainable Numbers
+- Every prediction, rating, and plan value must come from a documented rule.
+- Formulas, thresholds, and rates must live in named configuration values, never as unexplained numbers in code.
+- Domain logic must be deterministic. The same inputs and reference date must give the same output.
+- The interface must show what data a result is based on and how reliable it is.
+
+III. Honest About Uncertainty
+- Never present an estimate as a guarantee.
+- Show missing, excluded, or weak data to the user instead of hiding it.
+- Show low confidence when the data is too thin to support a strong result.
+- Never invent a value that the data does not contain.
+
+IV. Athlete Safety
+- A goal must never push training beyond the limits the rules allow.
+- Easy paces come from current fitness, not from the goal.
+- Hard training paces must never be faster than the projected stretch pace.
+- Plans must follow the configured limits on volume growth, recovery, and hard training.
+- The app gives training guidance. It is not medical advice.
+
+V. Privacy by Default
+- Running and heart rate data is personal and must stay on the machine running the app.
+- Do not send user data to third-party services, analytics, or external scripts.
+- Do not write uploaded CSV data to disk or include it in logs.
+- Automated tests and committed files must use synthetic data, never the runner's real activity file.
+
+VI. Separation of Concerns
+- Keep domain logic independent of the web framework so that it can be tested alone and reused later.
+- Web routes only validate input, call domain logic, and present results.
+
+VII. Simplicity
+- Build only what the current specification requires.
+- Prefer the standard library and a small set of dependencies.
+- Do not add accounts, databases, cloud services, or background workers unless a specification requires them.
+- Justify any added complexity in the implementation plan.
+
+Governance
+- This constitution takes priority over other project practices.
+- Every implementation plan must include a constitution check, and any violation must be resolved or explicitly justified before work begins.
+- Amendments must state the reason and update the version: major for removing or redefining a principle, minor for adding one, patch for wording.
