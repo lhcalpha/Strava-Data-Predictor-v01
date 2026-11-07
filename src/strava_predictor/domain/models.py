@@ -41,10 +41,10 @@ class DataError(Exception):
         self.details = details
 
 
-class Projection(StrEnum):
-    SAFE = "SAFE"
-    LIKELY = "LIKELY"
-    STRETCH = "STRETCH"
+class NoTrendReason(StrEnum):
+    FALLBACK = "FALLBACK"
+    TOO_FEW_RUNS = "TOO_FEW_RUNS"
+    TOO_SHORT_SPAN = "TOO_SHORT_SPAN"
 
 
 class Rating(StrEnum):
@@ -141,7 +141,17 @@ class Prediction:
     used_fallback: bool
     interval_only: bool
     rate_multiplier: float
-    caps_applied: frozenset[Projection]
+    typical_rate: float  # 002 FR-001
+    trend_rate: float | None  # 002 FR-002; None when not used
+    trend_runs: int
+    trend_weight: float  # 002 FR-004
+    no_trend_reason: NoTrendReason | None
+    weekly_rate: float  # 002 FR-004: blended, at least 0
+    max_improvement: float  # 002 FR-005
+    improvement: float  # 002 FR-005: likely improvement before the distance slowdown
+    sigma_today: float  # 002 FR-006
+    sigma_improvement: float  # 002 FR-007
+    sigma: float  # 002 FR-008: log standard deviation of race time
     long_run_target_km: float
     reachable_long_run_km: float
     distance_slowdown_pct: int
@@ -160,6 +170,7 @@ class GoalRating:
     rating: Rating
     confidence: Confidence
     confidence_reasons: tuple[str, ...] = ()
+    goal_chance: float = 0.0  # 002 FR-010
 
 
 @dataclass(frozen=True)

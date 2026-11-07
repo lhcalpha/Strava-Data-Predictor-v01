@@ -1,8 +1,9 @@
 import pytest
 
-from strava_predictor.domain.models import Confidence, Rating
+from strava_predictor.domain.models import Confidence, Rating, RunnerInputs
+from strava_predictor.domain.prediction import predict
 from strava_predictor.domain.rating import rate_goal
-from tests.unit.domain_helpers import prediction, summary
+from tests.unit.domain_helpers import act, prediction, summary
 
 
 @pytest.mark.parametrize(
@@ -54,3 +55,41 @@ def test_low_confidence_with_fallback():
 def test_both_reasons_are_listed():
     result = rate_goal(290, prediction(hard_runs_used=1), summary(runs_used=10, runs_with_hr=2))
     assert len(result.confidence_reasons) == 2
+
+
+# --- 002 FR-010: chance of reaching the goal ---------------------------------------------
+
+
+def _scenario_1():
+    """002 US1 scenario 1: 50:00 for 10 km today, 10 weeks to race."""
+    runs = [act(3, 10.0, 50.0, avg=170)]
+    return predict(runs, summary(), RunnerInputs(10.0, 10, 290, 4, 201))
+
+
+@pytest.mark.parametrize(
+    ("goal", "expected_rating", "chance_pct"),
+    [
+        (290, Rating.AMBITIOUS, 35),
+        (285, Rating.VERY_AMBITIOUS, 12),
+        (280, Rating.UNLIKELY, 3),
+    ],
+)
+def test_scenario_2_rating_and_chance(goal, expected_rating, chance_pct):
+    result = rate_goal(goal, _scenario_1(), summary())
+    assert result.rating == expected_rating
+    assert round(result.goal_chance * 100) == chance_pct
+
+
+@pytest.mark.parametrize(("which", "chance"), [("safe", 0.8), ("likely", 0.5), ("stretch", 0.2)])
+def test_scenario_3_chance_at_each_projection(which, chance):
+    projected = _scenario_1()
+    goal = getattr(projected, which).pace_s_per_km
+    assert rate_goal(goal, projected, summary()).goal_chance == pytest.approx(chance)
+
+
+def test_chance_uses_the_slowed_likely_time():
+    projected = prediction(likely=300.0, sigma=0.05)
+    assert rate_goal(300.0, projected, summary()).goal_chance == pytest.approx(0.5)
+    faster = rate_goal(290.0, projected, summary()).goal_chance
+    slower = rate_goal(310.0, projected, summary()).goal_chance
+    assert faster < 0.5 < slower

@@ -1,4 +1,7 @@
-"""Goal rating and confidence (FR-026, FR-027, research R11)."""
+"""Goal rating, confidence, and chance of success (001 FR-026, FR-027, R11; 002 FR-010)."""
+
+import math
+from statistics import NormalDist
 
 from strava_predictor import config
 from strava_predictor.domain.models import (
@@ -46,6 +49,13 @@ def _confidence_reasons(prediction: Prediction, summary: DataSummary) -> list[st
     return reasons
 
 
+def goal_chance(goal_pace_s_per_km: float, prediction: Prediction) -> float:
+    """Chance that a log-normal race time around the likely time beats the goal (002 FR-010)."""
+    goal_time = goal_pace_s_per_km * prediction.race_distance_km
+    spread = NormalDist(math.log(prediction.likely.time_s), prediction.sigma)
+    return spread.cdf(math.log(goal_time))
+
+
 def rate_goal(
     goal_pace_s_per_km: float, prediction: Prediction, summary: DataSummary
 ) -> GoalRating:
@@ -54,4 +64,5 @@ def rate_goal(
         rating=_rating(goal_pace_s_per_km, prediction),
         confidence=Confidence.LOW if reasons else Confidence.NORMAL,
         confidence_reasons=tuple(reasons),
+        goal_chance=goal_chance(goal_pace_s_per_km, prediction),
     )

@@ -30,10 +30,10 @@ Paths are relative to `tests/`. `u/` = `unit/`, `i/` = `integration/`, `e/` = `e
 | FR-019 | u/test_prediction_today.py::test_riegel_known_value, ::test_single_hard_run, ::test_three_fastest_of_five_hard_runs, ::test_two_hard_runs_are_both_averaged, ::test_hard_runs_under_3km_are_ignored |
 | FR-020 | u/test_prediction_today.py::test_fallback_uses_three_fastest_runs_over_3km, ::test_no_run_of_3km_is_an_error; u/test_rating.py::test_low_confidence_with_fallback |
 | FR-021 | u/test_prediction_today.py::test_interval_only_basis, ::test_mixed_basis_is_not_interval_only; i/test_results_us1.py::test_interval_only_note |
-| FR-022 | u/test_prediction_projection.py::test_normal_projection, ::test_caps_after_multipliers_on_long_plans, ::test_cap_reached_exactly_is_not_reported, ::test_multiplier_can_trigger_cap |
-| FR-023 | u/test_prediction_projection.py::test_rate_multipliers |
+| FR-022 | Superseded by 002 FR-001 to FR-009; see [002 traceability](../002-adaptive-pace-projection/traceability.md) |
+| FR-023 | Superseded by 002 FR-001; u/test_prediction_projection.py::test_multiplier_scales_rate_limit_and_rate_uncertainty |
 | FR-024 | u/test_prediction_distance.py::test_long_run_target |
-| FR-025 | u/test_prediction_distance.py::test_reachable_long_run_grows_over_pre_taper_weeks, ::test_two_full_steps_short_slow_paces_by_two_percent, ::test_full_steps_only, ::test_slowdown_is_applied_after_the_cap; u/test_taper.py::test_taper_weeks |
+| FR-025 | u/test_prediction_distance.py::test_reachable_long_run_grows_over_pre_taper_weeks, ::test_two_full_steps_short_slow_paces_by_two_percent, ::test_full_steps_only, ::test_slowdown_is_applied_after_the_projection; u/test_taper.py::test_taper_weeks |
 | FR-026 | u/test_rating.py::test_rating_boundaries |
 | FR-027 | u/test_rating.py (confidence tests); i/test_results_us1.py::test_low_confidence_reason_shown; i/test_data_summary.py::test_mixed_quality_confidence |
 | FR-028 | u/test_plan_paces.py::test_target_pace_is_clamped, ::test_target_never_faster_than_stretch_even_when_stretch_is_slower_than_today, ::test_targets_stretch_note; i/test_results_plan.py::test_stretch_target_note_for_unlikely_goal |
@@ -70,7 +70,7 @@ Paths are relative to `tests/`. `u/` = `unit/`, `i/` = `integration/`, `e/` = `e
 |----------|-------|
 | US1-1 summary shown | i/test_results_us1.py::test_results_show_every_summary_value; e/test_journey_check_goal.py |
 | US1-2 52:07 from 5 km in 25:00 | u/test_prediction_today.py::test_riegel_known_value, ::test_single_hard_run |
-| US1-3 49:00 / 48:30 / 47:30 | u/test_prediction_projection.py::test_normal_projection |
+| US1-3 49:00 / 48:30 / 47:30 | Superseded by 002 US1-1 |
 | US1-4 Ambitious / Very ambitious / Unlikely | u/test_rating.py::test_rating_boundaries (290, 280, 279) |
 | US1-5 no hard runs → low confidence | u/test_prediction_today.py::test_fallback_uses_three_fastest_runs_over_3km; i/test_results_us1.py::test_low_confidence_reason_shown |
 | US1-6 interval-only message | i/test_results_us1.py::test_interval_only_note |

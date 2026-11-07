@@ -25,7 +25,7 @@ Shows the input form.
 | Upload over 10 MB | 413 | Form with "File is larger than 10 MB"; values kept. |
 
 Warnings (distance below 3 km or above 42.195 km, weeks below 4, stale data, low confidence,
-caps applied, distance-fitness slowdown, interval-only basis, stretch-pace targeting, plan hard
+trend and improvement curve (002), distance-fitness slowdown, interval-only basis, stretch-pace targeting, plan hard
 total outside 15–20%) appear on the results page and never block results.
 
 ## GET /static/style.css

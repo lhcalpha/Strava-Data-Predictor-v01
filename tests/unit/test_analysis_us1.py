@@ -1,3 +1,4 @@
+import math
 from datetime import timedelta
 
 import pytest
@@ -21,7 +22,14 @@ def test_typical_runner_matches_hand_calculation(load_fixture, default_inputs, r
     assert result.summary.runs_used == 30
     # 12 weeks: taper 1, so 11 pre-taper weeks; longest run 16 km reaches the 12 km target.
     assert result.prediction.distance_slowdown_pct == 0
-    assert result.prediction.likely.time_s == pytest.approx(expected_today * (1 - 0.003 * 12))
+    # 002: the 6 hard runs give a trend with weight 6 / (6 + 8), blended with the 0.3% typical rate.
+    prediction = result.prediction
+    assert prediction.trend_runs == 6
+    assert prediction.trend_weight == pytest.approx(6 / 14)
+    rate = 6 / 14 * prediction.trend_rate + 8 / 14 * 0.003
+    assert prediction.weekly_rate == pytest.approx(rate)
+    improvement = 0.08 * (1 - math.exp(-rate * 12 / 0.08))
+    assert prediction.likely.time_s == pytest.approx(expected_today * (1 - improvement))
     assert result.rating.rating == Rating.CONSERVATIVE
 
 

@@ -19,13 +19,13 @@
     <h2>Your {{ inputs.race_distance_km | km }} km race in {{ inputs.weeks_to_race }} weeks</h2>
     <div class="table-wrap">
       <table>
-        <thead><tr><th></th><th>Pace (per km)</th><th>Time</th></tr></thead>
+        <thead><tr><th></th><th>Pace (per km)</th><th>Time</th><th>Chance of this or faster</th></tr></thead>
         <tbody>
-          <tr><th scope="row">Today</th><td>{{ p.today_pace_s_per_km | pace }}</td><td>{{ p.today_time_s | duration }}</td></tr>
-          <tr><th scope="row">Safe</th><td>{{ p.safe.pace_s_per_km | pace }}</td><td>{{ p.safe.time_s | duration }}</td></tr>
-          <tr><th scope="row">Likely</th><td>{{ p.likely.pace_s_per_km | pace }}</td><td>{{ p.likely.time_s | duration }}</td></tr>
-          <tr><th scope="row">Stretch</th><td>{{ p.stretch.pace_s_per_km | pace }}</td><td>{{ p.stretch.time_s | duration }}</td></tr>
-          <tr><th scope="row">Your goal</th><td>{{ inputs.goal_pace_s_per_km | pace }}</td><td>{{ goal_time | duration }}</td></tr>
+          <tr><th scope="row">Today</th><td>{{ p.today_pace_s_per_km | pace }}</td><td>{{ p.today_time_s | duration }}</td><td>–</td></tr>
+          <tr><th scope="row">Safe</th><td>{{ p.safe.pace_s_per_km | pace }}</td><td>{{ p.safe.time_s | duration }}</td><td id="chance-safe">{{ safe_chance | percent }}</td></tr>
+          <tr><th scope="row">Likely</th><td>{{ p.likely.pace_s_per_km | pace }}</td><td>{{ p.likely.time_s | duration }}</td><td id="chance-likely">50%</td></tr>
+          <tr><th scope="row">Stretch</th><td>{{ p.stretch.pace_s_per_km | pace }}</td><td>{{ p.stretch.time_s | duration }}</td><td id="chance-stretch">{{ (1 - safe_chance) | percent }}</td></tr>
+          <tr><th scope="row">Your goal</th><td>{{ inputs.goal_pace_s_per_km | pace }}</td><td>{{ goal_time | duration }}</td><td id="chance-goal">{{ r.goal_chance | percent }}</td></tr>
         </tbody>
       </table>
     </div>
@@ -38,7 +38,10 @@
     </div>
     <p class="muted">Today's estimate is the average of up to 3 race-time predictions from your
       {% if p.used_fallback %}fastest runs{% else %}hard runs{% endif %} of 3 km or more
-      (Riegel formula). Safe, likely, and stretch assume 0.2%, 0.3%, and 0.5% improvement a week.</p>
+      (Riegel formula). Likely is the middle estimate for race day: improvement starts at your
+      weekly rate and levels off over time. You have about an 80% chance of running the safe time
+      or faster and a 20% chance of the stretch time, given how uncertain today's estimate and your
+      improvement are.</p>
     <h3>Runs behind today's estimate</h3>
     <div class="table-wrap">
       <table id="basis-runs">

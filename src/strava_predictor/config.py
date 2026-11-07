@@ -51,12 +51,6 @@ RIEGEL_EXPONENT = 1.06  # FR-019
 MIN_PREDICTION_RUN_KM = 3.0  # FR-019
 TOP_PREDICTIONS = 3  # FR-019
 TEN_K_KM = 10.0  # FR-036: easy pace comes from today's 10 km estimate
-WEEKLY_RATE_SAFE = 0.002  # FR-022
-WEEKLY_RATE_LIKELY = 0.003  # FR-022
-WEEKLY_RATE_STRETCH = 0.005  # FR-022
-IMPROVEMENT_CAP_SAFE = 0.04  # FR-022 (clarified 2026-11-05)
-IMPROVEMENT_CAP_LIKELY = 0.06  # FR-022 (clarified 2026-11-05)
-IMPROVEMENT_CAP_STRETCH = 0.10  # FR-022 (clarified 2026-11-05)
 LOW_VOLUME_MULTIPLIER = 1.25  # FR-023
 MIN_ACTIVE_WEEKS = 8  # FR-023
 LOW_VOLUME_KM = 15.0  # FR-023
@@ -68,6 +62,20 @@ LONG_RUN_MAX_KM = 35.0  # FR-024
 LONG_RUN_GROWTH = 0.10  # FR-025 and R15
 SHORTFALL_STEP = 0.10  # FR-025
 SLOWDOWN_PER_STEP = 0.01  # FR-025
+
+# --- Projecting to race day (002 FR-001 to FR-010, 002 research P1 to P5) -----------------
+# These replace 001 FR-022's fixed 0.2/0.3/0.5% rates and 4/6/10% caps.
+TYPICAL_WEEKLY_RATE = 0.003  # 002 FR-001: weekly improvement before the multiplier
+RATE_SIGMA = 0.0015  # 002 FR-007: uncertainty of the weekly rate with no personal trend
+MAX_IMPROVEMENT = 0.08  # 002 FR-005: improvement the curve levels off at, before the multiplier
+TREND_MIN_RUNS = 4  # 002 FR-003
+TREND_MIN_SPAN_DAYS = 28  # 002 FR-003
+TREND_RATE_MIN = -0.005  # 002 FR-002: measured trend is limited to this range a week
+TREND_RATE_MAX = 0.010  # 002 FR-002
+TREND_PRIOR_RUNS = 8  # 002 FR-004: the typical rate counts as this many runs when blending
+RIEGEL_SIGMA_BASE = 0.02  # 002 FR-006: Riegel uncertainty at the same distance
+RIEGEL_SIGMA_PER_DOUBLING = 0.01  # 002 FR-006: added per doubling between run and race
+SAFE_PROBABILITY = 0.8  # 002 FR-008: chance of beating safe; stretch is 1 - this
 
 # --- Rating the goal (FR-026, FR-027) ------------------------------------------------------
 VERY_AMBITIOUS_MARGIN = 0.02

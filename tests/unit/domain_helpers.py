@@ -5,6 +5,7 @@ from datetime import date, timedelta
 from strava_predictor.domain.models import (
     Activity,
     DataSummary,
+    NoTrendReason,
     Prediction,
     ProjectedResult,
 )
@@ -56,6 +57,7 @@ def prediction(
     hard_runs_used=5,
     used_fallback=False,
     ten_k=300.0,
+    sigma=0.02,
 ):
     def result(pace):
         return ProjectedResult(time_s=pace * km, pace_s_per_km=pace)
@@ -68,7 +70,17 @@ def prediction(
         used_fallback=used_fallback,
         interval_only=False,
         rate_multiplier=1.0,
-        caps_applied=frozenset(),
+        typical_rate=0.003,
+        trend_rate=None,
+        trend_runs=0,
+        trend_weight=0.0,
+        no_trend_reason=NoTrendReason.TOO_FEW_RUNS,
+        weekly_rate=0.003,
+        max_improvement=0.08,
+        improvement=0.03,
+        sigma_today=0.02,
+        sigma_improvement=0.01,
+        sigma=sigma,
         long_run_target_km=12.0,
         reachable_long_run_km=20.0,
         distance_slowdown_pct=0,

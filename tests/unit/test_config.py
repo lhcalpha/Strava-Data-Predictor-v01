@@ -16,12 +16,17 @@ EXPECTED = {
     "RIEGEL_EXPONENT": 1.06,
     "MIN_PREDICTION_RUN_KM": 3.0,
     "TOP_PREDICTIONS": 3,
-    "WEEKLY_RATE_SAFE": 0.002,
-    "WEEKLY_RATE_LIKELY": 0.003,
-    "WEEKLY_RATE_STRETCH": 0.005,
-    "IMPROVEMENT_CAP_SAFE": 0.04,
-    "IMPROVEMENT_CAP_LIKELY": 0.06,
-    "IMPROVEMENT_CAP_STRETCH": 0.10,
+    "TYPICAL_WEEKLY_RATE": 0.003,
+    "RATE_SIGMA": 0.0015,
+    "MAX_IMPROVEMENT": 0.08,
+    "TREND_MIN_RUNS": 4,
+    "TREND_MIN_SPAN_DAYS": 28,
+    "TREND_RATE_MIN": -0.005,
+    "TREND_RATE_MAX": 0.010,
+    "TREND_PRIOR_RUNS": 8,
+    "RIEGEL_SIGMA_BASE": 0.02,
+    "RIEGEL_SIGMA_PER_DOUBLING": 0.01,
+    "SAFE_PROBABILITY": 0.8,
     "LOW_VOLUME_MULTIPLIER": 1.25,
     "MIN_ACTIVE_WEEKS": 8,
     "LOW_VOLUME_KM": 15.0,
@@ -108,3 +113,23 @@ def test_growth_rate_below_weekly_limit():
 def test_phase_shares_add_up():
     total = config.PHASE_SHARE_BASE + config.PHASE_SHARE_BUILD + config.PHASE_SHARE_PEAK
     assert total == pytest.approx(1.0)
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "WEEKLY_RATE_SAFE",
+        "WEEKLY_RATE_LIKELY",
+        "WEEKLY_RATE_STRETCH",
+        "IMPROVEMENT_CAP_SAFE",
+        "IMPROVEMENT_CAP_LIKELY",
+        "IMPROVEMENT_CAP_STRETCH",
+    ],
+)
+def test_fixed_rates_and_caps_are_gone(name):
+    """002 FR-009: the fixed 001 rates and caps were replaced by the improvement curve."""
+    assert not hasattr(config, name)
+
+
+def test_safe_probability_is_above_half():
+    assert 0.5 < config.SAFE_PROBABILITY < 1

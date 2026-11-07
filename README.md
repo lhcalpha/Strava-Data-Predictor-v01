@@ -3,7 +3,10 @@
 A small web app for one runner. Upload your Strava activities CSV, enter your race, and get:
 
 - **Today's predicted race pace and time**, from your recent hard runs (Riegel formula).
-- **Safe, likely, and stretch paces** for race day, with capped weekly improvement.
+- **Safe, likely, and stretch paces** for race day: improvement that levels off over time, your own
+  trend from recent hard runs blended with a typical rate, and the chance (80%, 50%, 20%) of running
+  each time or faster, plus the chance of reaching your goal. See
+  [specs/002-adaptive-pace-projection/spec.md](specs/002-adaptive-pace-projection/spec.md).
 - **An honest rating of your goal**: Conservative, Realistic, Ambitious, Very ambitious, or
   Unlikely in this time, plus how much confidence the data supports.
 - **A week-by-week 80/20 training plan** up to the race: phases, weekly distance and time,

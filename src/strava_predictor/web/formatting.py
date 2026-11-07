@@ -7,9 +7,9 @@ from strava_predictor.domain.effort import effort_thresholds
 from strava_predictor.domain.models import (
     Confidence,
     ExclusionReason,
+    NoTrendReason,
     Phase,
     Prediction,
-    Projection,
     Rating,
     SessionKind,
 )
@@ -58,12 +58,6 @@ SESSION_LABELS = {
     SessionKind.RACE: "Race",
 }
 
-PROJECTION_LABELS = {
-    Projection.SAFE: "safe",
-    Projection.LIKELY: "likely",
-    Projection.STRETCH: "stretch",
-}
-
 
 def km(value: float) -> str:
     return f"{value:.1f}"
@@ -71,6 +65,46 @@ def km(value: float) -> str:
 
 def percent(value: float) -> str:
     return f"{value * config.PERCENT:.0f}%"
+
+
+def rate_percent(value: float) -> str:
+    """Weekly rates such as 0.003 shown as 0.30%."""
+    return f"{value * config.PERCENT:.2f}%"
+
+
+def percent1(value: float) -> str:
+    return f"{value * config.PERCENT:.1f}%"
+
+
+def _trend_note(prediction: Prediction) -> str:
+    """How the weekly rate was found (002 FR-003, FR-004)."""
+    typical = f"the typical rate of {rate_percent(prediction.typical_rate)} a week was used"
+    reason = prediction.no_trend_reason
+    if reason == NoTrendReason.FALLBACK:
+        return f"No improvement trend was measured, because there were no hard runs; {typical}."
+    if reason == NoTrendReason.TOO_FEW_RUNS:
+        return (
+            f"Measuring your own improvement trend needs at least {config.TREND_MIN_RUNS} hard "
+            f"runs of {config.MIN_PREDICTION_RUN_KM:g} km or more; you have "
+            f"{prediction.trend_runs}, so {typical}."
+        )
+    if reason == NoTrendReason.TOO_SHORT_SPAN:
+        return (
+            f"Your hard runs cover less than {config.TREND_MIN_SPAN_DAYS} days, too short to "
+            f"measure your own trend, so {typical}."
+        )
+    trend = prediction.trend_rate
+    direction = "faster" if trend >= 0 else "slower"
+    weight = percent(prediction.trend_weight)
+    typical_rate = rate_percent(prediction.typical_rate)
+    note = (
+        f"Your {prediction.trend_runs} hard runs show you getting {direction} by "
+        f"{rate_percent(abs(trend))} a week. That trend was given {weight} of the weight against "
+        f"the typical rate of {typical_rate}, giving {rate_percent(prediction.weekly_rate)} a week."
+    )
+    if prediction.weekly_rate == 0:
+        note += " Because your recent trend is flat or slower, no improvement is projected."
+    return note
 
 
 def prediction_notes(prediction: Prediction) -> list[str]:
@@ -83,23 +117,16 @@ def prediction_notes(prediction: Prediction) -> list[str]:
         )
     if prediction.rate_multiplier != 1.0:
         notes.append(
-            f"Improvement rates were multiplied by {prediction.rate_multiplier:g} because of how "
-            "much and how often you ran in the last 12 weeks."
+            f"The typical improvement rate and the improvement limit were multiplied by "
+            f"{prediction.rate_multiplier:g} because of how much and how often you ran in the "
+            "last 12 weeks."
         )
-    if prediction.caps_applied:
-        names = ", ".join(PROJECTION_LABELS[p] for p in Projection if p in prediction.caps_applied)
-        limits = ", ".join(
-            percent(cap)
-            for cap in (
-                config.IMPROVEMENT_CAP_SAFE,
-                config.IMPROVEMENT_CAP_LIKELY,
-                config.IMPROVEMENT_CAP_STRETCH,
-            )
-        )
-        notes.append(
-            f"Improvement was capped for the {names} pace (safe, likely, and stretch limits: "
-            f"{limits})."
-        )
+    notes.append(_trend_note(prediction))
+    notes.append(
+        f"Improvement starts at {rate_percent(prediction.weekly_rate)} a week and levels off as "
+        f"gains get harder, up to at most {percent1(prediction.max_improvement)}; the likely "
+        f"improvement by race day is {percent1(prediction.improvement)}."
+    )
     if prediction.distance_slowdown_pct:
         notes.append(
             f"Your long run is expected to reach {km(prediction.reachable_long_run_km)} km, "
@@ -114,6 +141,8 @@ def register(env: Environment) -> None:
     env.filters["duration"] = format_duration
     env.filters["km"] = km
     env.filters["percent"] = percent
+    env.filters["rate_percent"] = rate_percent
+    env.globals["safe_chance"] = config.SAFE_PROBABILITY
     env.globals["RATING_LABELS"] = RATING_LABELS
     env.globals["RATING_EXPLANATIONS"] = RATING_EXPLANATIONS
     env.globals["CONFIDENCE_LABELS"] = CONFIDENCE_LABELS

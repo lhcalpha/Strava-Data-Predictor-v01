@@ -1,6 +1,12 @@
-"""Today's race estimate and race-day projections (FR-019 to FR-025)."""
+"""Today's race estimate and race-day projections.
+
+001 FR-019 to FR-021 and FR-024 to FR-025 give today's estimate and the distance-fitness slowdown;
+002 FR-001 to FR-009 give the improvement curve, the personal trend, and safe/likely/stretch.
+"""
 
 import math
+import statistics
+from statistics import NormalDist
 
 from strava_predictor import config
 from strava_predictor.domain.effort import classify_effort
@@ -10,18 +16,12 @@ from strava_predictor.domain.models import (
     DataErrorCode,
     DataSummary,
     EffortClass,
+    NoTrendReason,
     Prediction,
     ProjectedResult,
-    Projection,
     RunnerInputs,
 )
 from strava_predictor.domain.taper import taper_weeks
-
-RATES = {
-    Projection.SAFE: (config.WEEKLY_RATE_SAFE, config.IMPROVEMENT_CAP_SAFE),
-    Projection.LIKELY: (config.WEEKLY_RATE_LIKELY, config.IMPROVEMENT_CAP_LIKELY),
-    Projection.STRETCH: (config.WEEKLY_RATE_STRETCH, config.IMPROVEMENT_CAP_STRETCH),
-}
 
 
 def riegel(time_s: float, run_km: float, race_km: float) -> float:
@@ -76,32 +76,86 @@ def long_run_target_km(race_km: float) -> float:
     return min(max(value, config.LONG_RUN_MIN_KM), config.LONG_RUN_MAX_KM)
 
 
+def _trend(
+    candidates: list[Activity], used_fallback: bool, race_km: float
+) -> tuple[float | None, int, NoTrendReason | None]:
+    """Weekly trend from the Theil-Sen slope of log race time against weeks (002 FR-002, FR-003).
+
+    Returns the limited trend (positive means getting faster) or None, the runs considered, and
+    why no trend was used.
+    """
+    if used_fallback:
+        return None, 0, NoTrendReason.FALLBACK
+    count = len(candidates)
+    if count < config.TREND_MIN_RUNS:
+        return None, count, NoTrendReason.TOO_FEW_RUNS
+    dates = [run.date for run in candidates]
+    if (max(dates) - min(dates)).days < config.TREND_MIN_SPAN_DAYS:
+        return None, count, NoTrendReason.TOO_SHORT_SPAN
+    points = sorted(
+        (
+            run.date.toordinal() / config.DAYS_PER_WEEK,
+            math.log(riegel(run.moving_time_s, run.distance_km, race_km)),
+        )
+        for run in candidates
+    )
+    slopes = [
+        (later_y - y) / (later_x - x)
+        for index, (x, y) in enumerate(points)
+        for later_x, later_y in points[index + 1 :]
+        if later_x != x
+    ]
+    weekly = 1 - math.exp(statistics.median(slopes))
+    return min(max(weekly, config.TREND_RATE_MIN), config.TREND_RATE_MAX), count, None
+
+
+def _sigma_today(basis: list[Activity], race_km: float) -> float:
+    """Uncertainty of today's estimate as a share of time (002 FR-006)."""
+    doublings = sum(abs(math.log2(race_km / run.distance_km)) for run in basis) / len(basis)
+    formula = config.RIEGEL_SIGMA_BASE + config.RIEGEL_SIGMA_PER_DOUBLING * doublings
+    logs = [math.log(riegel(run.moving_time_s, run.distance_km, race_km)) for run in basis]
+    spread = statistics.stdev(logs) if len(logs) > 1 else 0.0
+    return math.hypot(formula, spread)
+
+
 def predict(runs: list[Activity], summary: DataSummary, inputs: RunnerInputs) -> Prediction:
     race_km = inputs.race_distance_km
+    weeks = inputs.weeks_to_race
     candidates, hard_count, used_fallback = _basis(runs, inputs.max_hr)
     today_time, basis = _estimate(candidates, race_km)
     ten_k_time, _ = _estimate(candidates, config.TEN_K_KM)
 
+    # 002 FR-001 to FR-004: typical rate blended with the runner's own trend.
     multiplier = rate_multiplier(summary)
-    caps_applied = set()
-    projected = {}
-    for projection, (rate, cap) in RATES.items():
-        improvement = rate * multiplier * inputs.weeks_to_race
-        if improvement > cap + config.FLOAT_TOLERANCE:
-            caps_applied.add(projection)
-            improvement = cap
-        projected[projection] = today_time * (1 - improvement)
+    typical = config.TYPICAL_WEEKLY_RATE * multiplier
+    trend, trend_runs, no_trend_reason = _trend(candidates, used_fallback, race_km)
+    weight = 0.0 if trend is None else trend_runs / (trend_runs + config.TREND_PRIOR_RUNS)
+    measured = typical if trend is None else trend
+    rate = max(0.0, weight * measured + (1 - weight) * typical)
 
+    # 002 FR-005: improvement starts at the weekly rate and levels off at the limit.
+    limit = config.MAX_IMPROVEMENT * multiplier
+    decay = math.exp(-rate * weeks / limit)
+    improvement = limit * (1 - decay)
+
+    # 002 FR-006 to FR-008: log-normal spread; safe and stretch are its 80th and 20th percentiles.
+    sigma_today = _sigma_today(basis, race_km)
+    sigma_improvement = config.RATE_SIGMA * multiplier * math.sqrt(1 - weight) * weeks * decay
+    sigma = math.hypot(sigma_today, sigma_improvement)
+    spread = math.exp(NormalDist().inv_cdf(config.SAFE_PROBABILITY) * sigma)
+    likely_time = today_time * (1 - improvement)
+
+    # 001 FR-024 and FR-025, applied after the projection (002 FR-009).
     target = long_run_target_km(race_km)
-    pre_taper = inputs.weeks_to_race - taper_weeks(race_km, inputs.weeks_to_race)
+    pre_taper = weeks - taper_weeks(race_km, weeks)
     reachable = summary.longest_run_km * (1 + config.LONG_RUN_GROWTH) ** pre_taper
     shortfall = max(0.0, (target - reachable) / target)
     steps = math.floor(shortfall / config.SHORTFALL_STEP + config.FLOAT_TOLERANCE)
     slowdown = steps * config.SLOWDOWN_PER_STEP
 
-    def result(projection: Projection) -> ProjectedResult:
-        time_s = projected[projection] * (1 + slowdown)
-        return ProjectedResult(time_s=time_s, pace_s_per_km=time_s / race_km)
+    def result(time_s: float) -> ProjectedResult:
+        slowed = time_s * (1 + slowdown)
+        return ProjectedResult(time_s=slowed, pace_s_per_km=slowed / race_km)
 
     return Prediction(
         race_distance_km=race_km,
@@ -111,12 +165,22 @@ def predict(runs: list[Activity], summary: DataSummary, inputs: RunnerInputs) ->
         used_fallback=used_fallback,
         interval_only=all(run.is_interval for run in basis),
         rate_multiplier=multiplier,
-        caps_applied=frozenset(caps_applied),
+        typical_rate=typical,
+        trend_rate=trend,
+        trend_runs=trend_runs,
+        trend_weight=weight,
+        no_trend_reason=no_trend_reason,
+        weekly_rate=rate,
+        max_improvement=limit,
+        improvement=improvement,
+        sigma_today=sigma_today,
+        sigma_improvement=sigma_improvement,
+        sigma=sigma,
         long_run_target_km=target,
         reachable_long_run_km=reachable,
         distance_slowdown_pct=steps,
-        safe=result(Projection.SAFE),
-        likely=result(Projection.LIKELY),
-        stretch=result(Projection.STRETCH),
+        safe=result(likely_time * spread),
+        likely=result(likely_time),
+        stretch=result(likely_time / spread),
         today_10k_pace_s_per_km=ten_k_time / config.TEN_K_KM,
     )

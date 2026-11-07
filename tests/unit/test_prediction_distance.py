@@ -1,3 +1,6 @@
+import math
+from statistics import NormalDist
+
 import pytest
 
 from strava_predictor.domain.models import RunnerInputs
@@ -5,6 +8,7 @@ from strava_predictor.domain.prediction import long_run_target_km, predict
 from tests.unit.domain_helpers import act, summary
 
 HALF = 21.0975
+Z = NormalDist().inv_cdf(0.8)
 
 
 @pytest.mark.parametrize(
@@ -37,9 +41,11 @@ def test_reachable_long_run_grows_over_pre_taper_weeks():
 def test_two_full_steps_short_slow_paces_by_two_percent():
     result = _half(weeks=1, longest=14.0)
     assert result.distance_slowdown_pct == 2
-    today = result.today_time_s
-    assert result.safe.time_s == pytest.approx(today * (1 - 0.002) * 1.02)
-    assert result.stretch.time_s == pytest.approx(today * (1 - 0.005) * 1.02)
+    likely = result.today_time_s * (1 - result.improvement)
+    spread = math.exp(Z * result.sigma)
+    assert result.likely.time_s == pytest.approx(likely * 1.02)
+    assert result.safe.time_s == pytest.approx(likely * spread * 1.02)
+    assert result.stretch.time_s == pytest.approx(likely / spread * 1.02)
 
 
 @pytest.mark.parametrize(("longest", "steps"), [(16.218, 0), (16.2, 1), (18.0, 0), (25.0, 0)])
@@ -47,7 +53,9 @@ def test_full_steps_only(longest, steps):
     assert _half(weeks=1, longest=longest).distance_slowdown_pct == steps
 
 
-def test_slowdown_is_applied_after_the_cap():
+def test_slowdown_is_applied_after_the_projection():
+    """002 FR-009: the slowdown multiplies all three projected times."""
     result = _half(weeks=52, longest=0.12)
     assert result.distance_slowdown_pct == 2
-    assert result.stretch.time_s == pytest.approx(result.today_time_s * 0.90 * 1.02)
+    likely = result.today_time_s * (1 - result.improvement)
+    assert result.stretch.time_s == pytest.approx(likely * math.exp(-Z * result.sigma) * 1.02)

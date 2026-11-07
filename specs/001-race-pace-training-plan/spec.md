@@ -42,7 +42,7 @@ predicted, projected, and rated values match hand-calculated results.
    and stretch paces and times, the goal pace and time, a goal rating, and a confidence level.
 2. **Given** a single hard run of 5 km in 25:00 and a 10 km race, **When** today's estimate is
    calculated, **Then** the predicted 10 km time is 52:07 (25:00 × 2^1.06).
-3. **Given** today's 10 km estimate of 50:00, 10 weeks to race, normal improvement rates, and no
+3. *(Superseded by 002 US1 scenarios 1 and 2.)* **Given** today's 10 km estimate of 50:00, 10 weeks to race, normal improvement rates, and no
    distance-fitness adjustment, **When** paces are projected, **Then** safe is 49:00 (4:54/km),
    likely is 48:30 (4:51/km), and stretch is 47:30 (4:45/km).
 4. **Given** the projected paces in scenario 3, **When** the goal pace is 4:50/km, **Then** the
@@ -213,6 +213,9 @@ every count, date, and warning in the data summary.
   fastest runs of at least 3 km, and the result MUST be marked low confidence.
 - **FR-021**: If every run used for the estimate is an interval run, the results MUST state that the
   prediction is probably slower than the runner's true fitness.
+> **Superseded by [002](../002-adaptive-pace-projection/spec.md) FR-001 to FR-009** (2026-11-07): the fixed
+> rates and caps below were replaced by a levelling-off curve, a personal trend, and percentiles.
+
 - **FR-022**: Race-day times MUST be today's time reduced by weekly improvement rate × weeks to race,
   with rates of 0.2% (safe), 0.3% (likely), and 0.5% (stretch). After the multipliers in FR-023,
   the total improvement MUST be capped at 4% (safe), 6% (likely), and 10% (stretch), and the results
