@@ -7,7 +7,7 @@ The first user is one runner, but nothing may be tied to one race or distance. T
 USER JOURNEYS
 
 P1: Check a race goal
-The runner uploads a Strava activities CSV, enters race distance, weeks to race, goal pace, days per week, and max heart rate, then sees today's predicted pace, the safe, likely, and stretch paces, and a rating of their goal.
+The runner uploads a Strava activities CSV, enters race distance, weeks to race, goal pace, days per week, and max heart rate, then sees today's predicted pace, the safe, likely, and stretch paces with the chance of running each, a rating of their goal, and the chance of reaching it.
 
 P2: Get a training plan
 On the same results page, the runner sees a plan for every week up to the race, including phase, weekly distance, weekly time, easy/hard percentages, and each session with its distance and target pace.
@@ -33,7 +33,7 @@ READING THE CSV
 - Use only running activities from the 12 weeks before the reference date. The reference date is today.
 - Use activity date, name, type, description, distance, and moving time.
 - Strava exports may contain repeated column names, such as two Distance columns with different units. Convert all distances to km correctly.
-- Average heart rate comes from the number directly after "Avg" in the activity description, ignoring case and accepting forms such as "Avg 165", "Avg: 165", and "avg165". Ignore all other numbers. A value outside 30 to 250 is invalid.
+- Average heart rate comes from the number directly after "Avg" in the activity description, ignoring case. "Avg" may be followed by "HR" and by a colon or a dash, so "Avg 165", "Avg: 165", "avg165", "Avg - 165", "Avg HR - 165", "Avg HR: 165", and "Avg HR 165bpm" all give 165. Ignore all other numbers, including numbers in links, rep counts such as "5x1km", race ranks, and "Max" values; "Average" does not count as "Avg". A value outside 30 to 250 is invalid.
 - A run with a missing or invalid value stays in training volume but is not used to judge effort.
 - A run with no usable distance or moving time is excluded and counted in the data summary.
 - A CSV with missing required columns, or with fewer than 3 usable runs in the window, must produce a clear error and no prediction or plan.
@@ -52,9 +52,13 @@ PREDICTING ACHIEVABLE PACE
 1. Today's estimate: for each hard run of at least 3 km, predict race time with the Riegel formula: race time = run moving time x (race distance / run distance) ^ 1.06. Average the 3 fastest predictions, or all of them if there are fewer than 3.
 2. If there are no hard runs, use the same method on the 3 fastest runs and mark the result low confidence.
 3. If every run used is an interval run, state that the prediction is probably slower than the runner's true fitness.
-4. Project to race day by reducing today's time by the weekly improvement rate x weeks to race: safe 0.2%, likely 0.3%, stretch 0.5%.
-5. Multiply each rate by 1.25 if the runner ran in fewer than 8 of the 12 weeks or averaged under 15 km per week. Multiply each rate by 0.75 if they averaged over 60 km per week.
-6. Check distance fitness. Target long run: 8 km for 5K, 12 km for 10K, 18 km for half marathon, 30 km for marathon, interpolated linearly by race distance, with 8 km as the minimum and 35 km as the maximum. Grow the longest recent run by up to 10% per training week. For each full 10% that the reachable long run falls short of the target, slow all three projected paces by 1%, and state this in the results.
+4. Typical weekly improvement rate: 0.3%. Multiply it by 1.25 if the runner ran in fewer than 8 of the 12 weeks or averaged under 15 km per week, and by 0.75 if they averaged over 60 km per week. The same multiplier applies to the improvement limit and the rate's uncertainty below.
+5. The runner's own trend: with at least 4 hard runs of at least 3 km spread over at least 28 days, measure the weekly trend as the Theil-Sen slope (the median of the slopes between every pair of runs on different dates) of the log of each run's predicted race time against weeks. Limit it to -0.5% to +1.0% a week. Do not measure a trend from the fallback runs in step 2. If no trend is measured, say why.
+6. Blend: give the trend a weight of n / (n + 8) for n trend runs, and the typical rate the rest. The weekly rate is the blend, never below zero. Show the trend, its weight, and the rate.
+7. Improvement levels off instead of growing in a straight line: likely improvement = limit x (1 - e^(-rate x weeks / limit)), with a limit of 8%. Likely time = today's time x (1 - likely improvement).
+8. Uncertainty, as a share of time: today's estimate has 2% plus 1% for each doubling between run and race distance (averaged over the runs used), combined with the spread between those runs. The improvement has 0.15% x sqrt(1 - trend weight) x weeks x e^(-rate x weeks / limit). Combine the two as the square root of the sum of their squares.
+9. Safe is the time the runner has an 80% chance of beating, and stretch the time they have a 20% chance of beating, assuming a log-normal race time around the likely time with that uncertainty.
+10. Check distance fitness. Target long run: 8 km for 5K, 12 km for 10K, 18 km for half marathon, 30 km for marathon, interpolated linearly by race distance, with 8 km as the minimum and 35 km as the maximum. Grow the longest recent run by up to 10% per training week. For each full 10% that the reachable long run falls short of the target, slow all three projected paces by 1%, and state this in the results.
 
 RATING THE GOAL
 
@@ -63,6 +67,8 @@ RATING THE GOAL
 - Ambitious: faster than likely pace, up to stretch pace.
 - Very ambitious: faster than stretch pace by up to 2%.
 - Unlikely in this time: faster than stretch pace by more than 2%.
+
+Also show the chance of reaching the goal: the probability that the log-normal race time from step 9 is at or below the goal time, as a whole percentage. Conservative then means over 80%, Realistic 50% to 80%, and Ambitious 20% to 50%.
 
 Confidence is low if fewer than 3 hard runs were used or if fewer than half of the runs have usable heart rate. Otherwise it is normal.
 
@@ -82,7 +88,7 @@ GENERATING THE PLAN
 
 OUTPUT
 
-- A summary with today's pace and time, the three projected paces and times, goal pace and time, rating, and confidence.
+- A summary with today's pace and time, the three projected paces and times with the chance of running each or faster (80%, 50%, 20%), goal pace and time with its chance, rating, and confidence, plus a plain-language note on how the weekly rate and the improvement limit were found.
 - A data summary with runs used, runs excluded, runs with usable heart rate, hard runs used, date range, and warnings.
 - A week-by-week plan in tables, showing session day, type, distance, and target pace.
 - A note that results are estimates and not medical advice.

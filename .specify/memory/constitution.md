@@ -1,3 +1,19 @@
+<!--
+Sync Impact Report
+- Version: 1.0.0 → 1.1.0 (MINOR: materially expanded guidance in Principles I, II, and III)
+- Reason: lessons from features 002 (adaptive pace projection) and 003 (flexible heart-rate
+  reading). Parsing tests had used only the spec's example formats and missed the runner's real
+  "Avg - 187" format; the new projection quantifies uncertainty and relies on judgement-based
+  starting values.
+- Modified principles:
+  - I. Testing Is Mandatory: added testing free text against real-world formats.
+  - II. Correct, Explainable Numbers: added marking judgement-based values as tunable.
+  - III. Honest About Uncertainty: added showing a range or chance for projections.
+- Added sections: none. Removed sections: none.
+- Templates: .specify/templates/plan-template.md, spec-template.md, tasks-template.md need no
+  change (the constitution check reads principles from this file).
+- Follow-up TODOs: none.
+-->
 # Strava Data Predictor Constitution
 
 ## Core Principles
@@ -15,6 +31,9 @@
   - Unit tests for all parsing, prediction, rating, and plan-generation rules.
   - Integration tests for each web route, including invalid input.
   - End-to-end browser tests for each primary user journey.
+- Parsing of free text (such as activity descriptions) MUST be tested against the variations
+  runners actually write, not only the examples in the specification, using made-up text in
+  those formats.
 - Minimum line and branch coverage: 95% for domain logic and 90% for the project overall.
   Coverage is a minimum, not proof of quality.
 
@@ -28,6 +47,8 @@
 - Domain logic MUST be deterministic: the same inputs and reference date MUST give the same
   output.
 - The interface MUST show what data a result is based on and how reliable it is.
+- A rule value chosen by judgement rather than fitted to data MUST be documented as a tunable
+  starting value, with the reason it was chosen.
 
 **Rationale**: A runner can only trust and act on a result they can trace back to its inputs.
 
@@ -37,6 +58,8 @@
 - Missing, excluded, or weak data MUST be shown to the user, not hidden.
 - Low confidence MUST be shown when the data is too thin to support a strong result.
 - The app MUST NOT invent a value that the data does not contain.
+- A projection MUST show its uncertainty, such as a range or a chance of success, not only a
+  single number.
 
 **Rationale**: Overconfident predictions lead to poor goals and poor training decisions.
 
@@ -106,4 +129,4 @@ any work begins.
   - PATCH: wording, clarification, or typo fixes.
 - Compliance is reviewed at each plan's constitution check and at each change review.
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-05 | **Last Amended**: 2026-11-05
+**Version**: 1.1.0 | **Ratified**: 2026-11-05 | **Last Amended**: 2026-11-07

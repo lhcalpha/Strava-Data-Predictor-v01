@@ -12,6 +12,7 @@ I. Testing Is Mandatory (NON-NEGOTIABLE)
   - Unit tests for all parsing, prediction, rating, and plan-generation rules.
   - Integration tests for each web route, including invalid input.
   - End-to-end browser tests for each primary user journey.
+- Test parsing of free text (such as activity descriptions) against the variations runners actually write, not only the examples in the specification, using made-up text in those formats.
 - Minimum line and branch coverage: 95% for domain logic and 90% for the project overall. Coverage is a minimum, not proof of quality.
 
 II. Correct, Explainable Numbers
@@ -19,12 +20,14 @@ II. Correct, Explainable Numbers
 - Formulas, thresholds, and rates must live in named configuration values, never as unexplained numbers in code.
 - Domain logic must be deterministic. The same inputs and reference date must give the same output.
 - The interface must show what data a result is based on and how reliable it is.
+- Document any rule value chosen by judgement rather than fitted to data as a tunable starting value, with the reason it was chosen.
 
 III. Honest About Uncertainty
 - Never present an estimate as a guarantee.
 - Show missing, excluded, or weak data to the user instead of hiding it.
 - Show low confidence when the data is too thin to support a strong result.
 - Never invent a value that the data does not contain.
+- Show the uncertainty of every projection, such as a range or a chance of success, not only a single number.
 
 IV. Athlete Safety
 - A goal must never push training beyond the limits the rules allow.
