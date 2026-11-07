@@ -13,6 +13,7 @@ EXPECTED = {
     "EASY_HR_FRACTION": 0.75,
     "HARD_HR_FRACTION": 0.82,
     "INTERVAL_KEYWORDS": ("interval", "repeat"),
+    "AVG_HR_PATTERN": r"\bavg(?:\s*hr)?\s*[:\-]?\s*(\d{2,3})(?!\d)",  # 003 FR-001
     "RIEGEL_EXPONENT": 1.06,
     "MIN_PREDICTION_RUN_KM": 3.0,
     "TOP_PREDICTIONS": 3,

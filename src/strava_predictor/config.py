@@ -20,7 +20,8 @@ STALE_DATA_DAYS = 14  # FR-016
 MIN_USABLE_RUNS = 3  # FR-015
 HR_VALID_MIN = 30  # FR-012
 HR_VALID_MAX = 250  # FR-012
-AVG_HR_PATTERN = r"\bavg\s*:?\s*(\d{2,3})\b"  # FR-012, R5
+# FR-012, R5; 003 FR-001: "Avg", optional "HR", optional ":" or "-", then the number
+AVG_HR_PATTERN = r"\bavg(?:\s*hr)?\s*[:\-]?\s*(\d{2,3})(?!\d)"
 RUN_ACTIVITY_TYPES = frozenset({"Run", "Trail Run", "Virtual Run"})  # R4
 PACE_PLAUSIBLE_MIN = 120  # FR-014: faster than 2:00 per km is not a usable distance
 PACE_PLAUSIBLE_MAX = 1200  # FR-014: slower than 20:00 per km is not a usable distance

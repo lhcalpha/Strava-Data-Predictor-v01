@@ -51,6 +51,8 @@ add rule values the spec does not state; every one becomes a named setting in `c
 - **Decision**: First match of `\bavg\s*:?\s*(\d{2,3})\b` (case-insensitive) in the description;
   valid only from 30 to 250. "Average 150" and "Max 190" are not matched.
 - **Rationale**: Given by the project owner; matches the spec's examples.
+- **Amended by [003](../003-flexible-hr-parsing/spec.md)** (2026-11-07): the pattern is now
+  `\bavg(?:\s*hr)?\s*[:\-]?\s*(\d{2,3})(?!\d)`, which also reads "Avg - 187" and "Avg HR - 176".
 
 ## R6. Keeping uploads off disk
 

@@ -183,7 +183,9 @@ every count, date, and warning in the data summary.
 - **FR-011**: When the export contains repeated column names with different units (for example two
   Distance columns), the system MUST identify each column's unit and convert all distances to km.
 - **FR-012**: Average heart rate MUST be the number directly after "Avg" in the description,
-  ignoring case and accepting "Avg 165", "Avg: 165", and "avg165". All other numbers MUST be ignored.
+  ignoring case and accepting "Avg 165", "Avg: 165", and "avg165" (and, from
+  [003](../003-flexible-hr-parsing/spec.md), "Avg - 165" and "Avg HR - 165"). All other numbers MUST
+  be ignored.
   A value outside 30 to 250 MUST be treated as invalid.
 - **FR-013**: A run with a missing or invalid heart rate MUST count toward training volume but MUST
   NOT be used to judge effort.
