@@ -160,3 +160,12 @@ add rule values the spec does not state; every one becomes a named setting in `c
   total and the reason (FR-035).
 - **Rationale**: Fixed shares inside the allowed band make the weekly and total limits hold by
   construction, which the invariant tests then confirm.
+- **Added during implementation**: for long races the race alone can push the plan total over 20%
+  (for example 100 km over 52 weeks). The plan then scales every training week's hard share down
+  by one factor, found by bisection, until the total is at most 20%. A note appears only when even
+  no training hard time would keep the total in range (very short plans).
+- **Added during implementation**: with 2 days a week there are no easy runs, so the distance left
+  after the long run and the hard portion is added to the hard session's warm-up and cool-down in
+  the 2 : 1.5 ratio. When a week is too short for full 2 km and 1.5 km, both shrink in that ratio.
+- **Added during implementation**: the long run starts at the longest recent run even when that
+  is above the target, so high-volume runners are not cut back; it only grows while below target.

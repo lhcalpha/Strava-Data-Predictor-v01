@@ -1,0 +1,45 @@
+{% set plan = result.plan %}
+{% if plan %}
+<section class="card" id="plan">
+  <h2>Training plan</h2>
+  <p>Training target pace: <strong>{{ plan.target_pace_s_per_km | pace }}</strong> per km.
+    Easy pace: <strong>{{ plan.easy_pace_range[0] | pace }}–{{ plan.easy_pace_range[1] | pace }}</strong> per km,
+    from today's estimated 10 km pace of {{ plan.today_10k_pace_s_per_km | pace }}.
+    Hard time across the plan: <strong>{{ plan.total_hard_share | percent }}</strong>.</p>
+  {% if plan.notes %}
+  <ul class="warnings" id="plan-notes">
+    {% for note in plan.notes %}<li>{{ note }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+  {% if plan.hard_total_note %}
+  <p class="warnings" id="hard-total-note">{{ plan.hard_total_note }}</p>
+  {% endif %}
+  <p class="muted" id="time-basis">Weekly time and the hard share are calculated at the fast end of the easy pace range,
+    so the hard share shown is the highest it can be. Hard time counts only the hard part
+    of each session; warm-ups, cool-downs, and easy runs count as easy. The race counts as hard.</p>
+
+  {% for week in plan.weeks %}
+  <div class="week">
+    <h3>Week {{ week.number }}{% if week.is_lighter %} · lighter week{% endif %}{% if week.is_race_week %} · race week{% endif %}</h3>
+    <p class="week-meta">Phase: {{ PHASE_LABELS[week.phase] }} · {{ week.total_km | km }} km ·
+      {{ week.total_time_s | duration }} · easy {{ week.easy_share | percent }} / hard {{ week.hard_share | percent }}</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Day</th><th>Type</th><th>Distance (km)</th><th>Target pace</th><th>Details</th></tr></thead>
+        <tbody>
+          {% for s in week.sessions %}
+          <tr>
+            <td>{{ s.day }}</td>
+            <td class="kind-{{ s.kind }}">{{ SESSION_LABELS[s.kind] }}</td>
+            <td>{{ s.distance_km | km }}</td>
+            <td>{% if s.kind in ("EASY", "LONG") %}{{ plan.easy_pace_range[0] | pace }}–{{ plan.easy_pace_range[1] | pace }}{% else %}{{ s.pace_s_per_km | pace }}{% endif %}</td>
+            <td>{% if s.kind == "HARD" %}{{ s.warmup_km | km }} km warm-up, {{ s.hard_km | km }} km at {{ s.pace_s_per_km | pace }}, {{ s.cooldown_km | km }} km cool-down{% elif s.kind == "RACE" %}Race day{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endfor %}
+</section>
+{% endif %}

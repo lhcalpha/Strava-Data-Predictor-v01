@@ -11,3 +11,6 @@ htmlcov/
 New Data/
 export_*.zip
 activities.csv
+.coverage.*
+test-results/
+*.egg-info/

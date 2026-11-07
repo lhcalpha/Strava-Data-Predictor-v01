@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Results · Race pace predictor{% endblock %}
+{% block content %}
+{% set p = result.prediction %}
+{% set r = result.rating %}
+{% set goal_time = inputs.goal_pace_s_per_km * inputs.race_distance_km %}
+<div id="results">
+
+  {% set notes = prediction_notes(p) %}
+  {% if input_warnings or result.summary.warnings or notes %}
+  <ul class="warnings" id="warnings">
+    {% for w in input_warnings %}<li>{{ w }}</li>{% endfor %}
+    {% for w in result.summary.warnings %}<li>{{ w.message }}</li>{% endfor %}
+    {% for n in notes %}<li>{{ n }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+
+  <section class="card" id="summary">
+    <h2>Your {{ inputs.race_distance_km | km }} km race in {{ inputs.weeks_to_race }} weeks</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th></th><th>Pace (per km)</th><th>Time</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Today</th><td>{{ p.today_pace_s_per_km | pace }}</td><td>{{ p.today_time_s | duration }}</td></tr>
+          <tr><th scope="row">Safe</th><td>{{ p.safe.pace_s_per_km | pace }}</td><td>{{ p.safe.time_s | duration }}</td></tr>
+          <tr><th scope="row">Likely</th><td>{{ p.likely.pace_s_per_km | pace }}</td><td>{{ p.likely.time_s | duration }}</td></tr>
+          <tr><th scope="row">Stretch</th><td>{{ p.stretch.pace_s_per_km | pace }}</td><td>{{ p.stretch.time_s | duration }}</td></tr>
+          <tr><th scope="row">Your goal</th><td>{{ inputs.goal_pace_s_per_km | pace }}</td><td>{{ goal_time | duration }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p id="rating">Goal rating: <span class="rating">{{ RATING_LABELS[r.rating] }}</span>. {{ RATING_EXPLANATIONS[r.rating] }}</p>
+    <div id="confidence">
+      <p>Confidence: <strong>{{ CONFIDENCE_LABELS[r.confidence] }}</strong></p>
+      {% if r.confidence_reasons %}
+      <ul>{% for reason in r.confidence_reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
+      {% endif %}
+    </div>
+    <p class="muted">Today's estimate is the average of up to 3 race-time predictions from your
+      {% if p.used_fallback %}fastest runs{% else %}hard runs{% endif %} of 3 km or more
+      (Riegel formula). Safe, likely, and stretch assume 0.2%, 0.3%, and 0.5% improvement a week.</p>
+    <h3>Runs behind today's estimate</h3>
+    <div class="table-wrap">
+      <table id="basis-runs">
+        <thead><tr><th>Date</th><th>Name</th><th>Distance (km)</th><th>Time</th><th>Pace</th><th>Avg HR</th></tr></thead>
+        <tbody>
+          {% for run in p.basis_runs %}
+          <tr>
+            <td>{{ run.date.isoformat() }}</td>
+            <td>{{ run.name }}{% if run.is_interval %} <span class="muted">(interval)</span>{% endif %}</td>
+            <td>{{ run.distance_km | km }}</td>
+            <td>{{ run.moving_time_s | duration }}</td>
+            <td>{{ run.pace_s_per_km | pace }}</td>
+            <td>{{ run.avg_hr if run.avg_hr is not none else "–" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  {% include "_plan.html" %}
+  {% include "_data_summary.html" %}
+
+  <p class="disclaimer" id="disclaimer">These results are estimates, not guarantees. They are
+    training guidance, not medical advice. Stop and get help if anything hurts.</p>
+</div>
+
+<section class="card">
+  <h2>Try another scenario</h2>
+  {% include "_inputs.html" %}
+</section>
+{% endblock %}

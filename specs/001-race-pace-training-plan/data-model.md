@@ -145,9 +145,9 @@ the requirement shown; plan values come from [research.md](./research.md).
 | SHORTFALL_STEP / SLOWDOWN_PER_STEP | 0.10 / 0.01 | FR-025 |
 | VERY_AMBITIOUS_MARGIN | 0.02 | FR-026 |
 | MIN_HARD_RUNS_FOR_CONFIDENCE, MIN_HR_SHARE | 3, 0.5 | FR-027 |
-| TAPER_WEEKS | ≤10 km: 1, ≤21.1 km: 2, else 3 | FR-029 |
+| TAPER_WEEKS_BY_DISTANCE / TAPER_WEEKS_LONG_RACE | ≤10 km: 1, ≤21.1 km: 2, else 3 | FR-029 |
 | TAPER_CUTS | 1: (0.40); 2: (0.25, 0.50); 3: (0.20, 0.35, 0.55) | FR-029 (clarified) |
-| PHASE_SHARES | base 0.4, build 0.4, peak 0.2 | FR-030 |
+| PHASE_SHARE_BASE / BUILD / PEAK | 0.4 / 0.4 / 0.2 | FR-030 |
 | START_VOLUME_WEEKS | 4 | FR-031 |
 | MAX_WEEKLY_INCREASE | 0.10 | FR-032 |
 | LIGHTER_WEEK_EVERY | 4 | FR-032 |
@@ -164,6 +164,8 @@ the requirement shown; plan values come from [research.md](./research.md).
 | HARD_SHARE_BY_PHASE | base 0.15, build 0.18, peak 0.19, taper 0.15 | R16 |
 | WARMUP_KM / COOLDOWN_KM | 2.0 / 1.5 | R15 |
 | LONG_RUN_MAX_SHARE | 0.5 | R15 |
+| FEW_DAYS_PER_WEEK, HARD_SESSIONS_FEW_DAYS, HARD_SESSIONS_BY_PHASE | 3, 1, base 1 / build 2 / peak 2 / taper 1 | R15 |
+| HARD_SHARE_SEARCH_STEPS | 40 | R16 |
 
 ## State transitions
 

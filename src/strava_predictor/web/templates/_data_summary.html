@@ -1,0 +1,42 @@
+{% set s = result.summary %}
+{% set thresholds = effort_thresholds(inputs.max_hr) %}
+<section class="card" id="data-summary">
+  <h2>Your data</h2>
+  <div class="table-wrap">
+    <table>
+      <tbody>
+        <tr><th scope="row">Runs used</th><td>{{ s.runs_used }}</td></tr>
+        <tr><th scope="row">Runs excluded</th><td>{{ s.excluded_total }}</td></tr>
+        <tr><th scope="row">Runs with usable heart rate</th><td>{{ s.runs_with_hr }} of {{ s.runs_used }}</td></tr>
+        <tr><th scope="row">Hard runs used</th><td>{{ s.hard_runs_used }}</td></tr>
+        <tr><th scope="row">Date range</th><td>{% if s.date_range %}{{ s.date_range[0].isoformat() }} to {{ s.date_range[1].isoformat() }}{% else %}–{% endif %}</td></tr>
+        <tr><th scope="row">Average per week</th><td>{{ s.avg_weekly_km_12 | km }} km over 12 weeks, {{ s.avg_weekly_km_4 | km }} km over the last 4</td></tr>
+        <tr><th scope="row">Weeks with runs</th><td>{{ s.weeks_with_runs }} of 12</td></tr>
+        <tr><th scope="row">Longest run</th><td>{{ s.longest_run_km | km }} km</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  {% if s.excluded %}
+  <h3>Why runs were excluded</h3>
+  <div class="table-wrap">
+    <table id="exclusions">
+      <thead><tr><th>Reason</th><th>Count</th></tr></thead>
+      <tbody>
+        {% for reason, label in EXCLUSION_LABELS.items() %}{% if s.excluded.get(reason) %}
+        <tr><td>{{ label }}</td><td>{{ s.excluded[reason] }}</td></tr>
+        {% endif %}{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if s.warnings %}
+  <ul class="warnings">{% for w in s.warnings %}<li>{{ w.message }}</li>{% endfor %}</ul>
+  {% endif %}
+
+  <p class="muted">Effort comes from the number after "Avg" in each activity description. At a max
+    heart rate of {{ inputs.max_hr }} bpm, easy is up to {{ thresholds[0] }} bpm and hard starts at
+    {{ thresholds[1] }} bpm. Runs without a usable heart rate still count toward weekly distance but
+    are not used to judge effort. Runs named "interval" or "repeat" are interval runs.</p>
+</section>

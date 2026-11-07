@@ -56,3 +56,17 @@ Use the synthetic files in `tests/fixtures/`; never commit a real export.
 
 Plan rules for every distance, week count, and day count are checked automatically by the plan
 tests; see [contracts/domain-api.md](./contracts/domain-api.md).
+
+## Validation run: 2026-11-06
+
+Run against `python -m strava_predictor` on 127.0.0.1:8000 in Chromium, synthetic fixtures only.
+
+| # | Result |
+|---|--------|
+| 1 | Pass. Results in 0.4 s from opening the form (SC-001: under 2 minutes); 12 week tables; rating Conservative; disclaimer shown |
+| 2 | Pass. Regenerated without a file; 20 week tables |
+| 3 | Pass. "Confidence: Low. There were no hard runs of 3 km or more, so the estimate uses your fastest runs." |
+| 4 | Pass. "The file is missing required columns: Moving Time."; no plan shown |
+| 5 | Pass. "Weeks to race must be from 1 to 52." beside the field; goal pace 4:50 kept |
+| 6 | Pass. After a server restart: "Please upload your CSV again; the earlier upload has expired." |
+| 7 | Pass. Basis-run distances 10.0, 8.0, 6.0 km, matching the metre column |

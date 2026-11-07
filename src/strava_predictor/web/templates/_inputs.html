@@ -1,0 +1,46 @@
+{# The input form, shared by the form page and the results page. #}
+<form class="inputs" method="post" action="/results" enctype="multipart/form-data" novalidate>
+  {% if data_error %}
+  <p class="error-banner" role="alert" id="data-error">{{ data_error }}</p>
+  {% endif %}
+
+  <div class="field{% if errors.csv_file %} has-error{% endif %}">
+    <label for="csv_file">Strava activities CSV{% if has_data %} <span class="hint">(optional: a file is already loaded)</span>{% endif %}</label>
+    <input type="file" id="csv_file" name="csv_file" accept=".csv,text/csv">
+    {% if errors.csv_file %}<p class="field-error" id="csv_file-error">{{ errors.csv_file }}</p>{% endif %}
+  </div>
+
+  <div class="grid">
+    <div class="field{% if errors.race_distance_km %} has-error{% endif %}">
+      <label for="race_distance_km">Race distance (km)</label>
+      <input type="text" inputmode="decimal" id="race_distance_km" name="race_distance_km" value="{{ values.race_distance_km }}">
+      {% if errors.race_distance_km %}<p class="field-error" id="race_distance_km-error">{{ errors.race_distance_km }}</p>{% endif %}
+    </div>
+
+    <div class="field{% if errors.weeks_to_race %} has-error{% endif %}">
+      <label for="weeks_to_race">Weeks to race</label>
+      <input type="text" inputmode="numeric" id="weeks_to_race" name="weeks_to_race" value="{{ values.weeks_to_race }}">
+      {% if errors.weeks_to_race %}<p class="field-error" id="weeks_to_race-error">{{ errors.weeks_to_race }}</p>{% endif %}
+    </div>
+
+    <div class="field{% if errors.goal_pace %} has-error{% endif %}">
+      <label for="goal_pace">Goal pace (min:sec per km)</label>
+      <input type="text" id="goal_pace" name="goal_pace" placeholder="4:50" value="{{ values.goal_pace }}">
+      {% if errors.goal_pace %}<p class="field-error" id="goal_pace-error">{{ errors.goal_pace }}</p>{% endif %}
+    </div>
+
+    <div class="field{% if errors.days_per_week %} has-error{% endif %}">
+      <label for="days_per_week">Days per week</label>
+      <input type="text" inputmode="numeric" id="days_per_week" name="days_per_week" value="{{ values.days_per_week }}">
+      {% if errors.days_per_week %}<p class="field-error" id="days_per_week-error">{{ errors.days_per_week }}</p>{% endif %}
+    </div>
+
+    <div class="field{% if errors.max_hr %} has-error{% endif %}">
+      <label for="max_hr">Max heart rate (bpm)</label>
+      <input type="text" inputmode="numeric" id="max_hr" name="max_hr" value="{{ values.max_hr }}">
+      {% if errors.max_hr %}<p class="field-error" id="max_hr-error">{{ errors.max_hr }}</p>{% endif %}
+    </div>
+  </div>
+
+  <button type="submit">{% if has_data %}Update results{% else %}Get results{% endif %}</button>
+</form>
